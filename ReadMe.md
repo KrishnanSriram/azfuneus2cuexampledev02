@@ -254,6 +254,12 @@ Expected response:
 }
 ```
 
+If you miss setup of defaults, you'll see this following error
+
+```
+Error: CU analysis failed: {'id': 'c57522ec-ccea-45cc-b950-996b691936a5', 'status': 'Failed', 'error': {'code': 'InvalidRequest', 'message': 'Invalid Request.', 'innererror': {'code': 'ResourceError', 'message': "This analyzer needs a 'completion' model deployment for current request, but none was resolved. Either 'models.completion' is not set on the analyzer, or the deployment it references is not registered for this resource. Configure it via 'PATCH /contentunderstanding/defaults'."}}, 'result': {'analyzerId': 'prebuilt-documentSearch', 'apiVersion': '2025-11-01', 'createdAt': '2026-06-17T12:21:22Z', 'warnings': [], 'contents': []}}
+```
+
 ---
 
 ## Step 7 — Configure Function App Settings

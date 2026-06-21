@@ -78,6 +78,3 @@ echo "---"
 echo "Function App setup complete!"
 echo "Test it with:"
 echo "  curl \"https://$FN_NAME.azurewebsites.net/api/process_document?code=<key>&filename=invoice.pdf\""
-
-wghB9rGsOl7nisPYtxesuqEZrGTz3AXy_eD5ffAURX1TAzFup7cExg==
-curl \"https://$FN_NAME.azurewebsites.net/api/process_document?code=<key>&filename=invoice.pdf\"

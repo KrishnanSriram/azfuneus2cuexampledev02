@@ -11,13 +11,13 @@ HTTP Request (?filename=invoice.pdf)
         │
         ▼
 ┌──────────────────────────────┐
-│  azfuneus2cuexampledev01     │  Azure Function (HTTP Trigger)
+│  $FN_NAME     │  Azure Function (HTTP Trigger)
 │  Python 3.11, Consumption    │
 └──────────────────────────────┘
         │                          │
         ▼                          ▼
 ┌──────────────────┐    ┌──────────────────────────┐
-│  source          │    │  my-foundry-cu-01         │
+│  source          │    │  $CS_NAME         │
 │  (Blob Storage)  │───▶│  Content Understanding    │
 │  invoice.pdf     │    │  prebuilt-documentSearch  │
 └──────────────────┘    └──────────────────────────┘
@@ -31,16 +31,16 @@ HTTP Request (?filename=invoice.pdf)
 
 ## Resource Summary
 
-| Resource              | Name                     |
-| --------------------- | ------------------------ |
-| Subscription          | apps-eus2-dev-001        |
-| Resource Group        | rg-eus2-cuexample-dev-01 |
-| Storage Account       | saeus2cuexampledev01     |
-| Source Container      | source                   |
-| Destination Container | destination              |
-| Azure Function App    | azfuneus2cuexampledev01  |
-| Content Understanding | my-foundry-cu-01         |
-| Location              | East US 2                |
+| Resource              | Name              |
+| --------------------- | ----------------- |
+| Subscription          | apps-eus2-dev-001 |
+| Resource Group        | $RG               |
+| Storage Account       | $SA_NAME          |
+| Source Container      | source            |
+| Destination Container | destination       |
+| Azure Function App    | $FN_NAME          |
+| Content Understanding | $CS_NAME          |
+| Location              | East US 2         |
 
 ---
 
@@ -53,19 +53,27 @@ HTTP Request (?filename=invoice.pdf)
 
 ---
 
+## Step 0 - Set variables
+
+RG=rg-eus2-cuexample-dev-01
+SA_NAME=saeus2cuexampledev01
+FN_NAME=azfuneus2cuexampledev01
+CS_NAME=my-foundry-cu-02
+LOCATION=eastus2
+
 ## Step 1 — Create Resource Group
 
 ```bash
 az group create \
-  --name rg-eus2-cuexample-dev-01 \
-  --location eastus2
+  --name $RG \
+  --location $LOCATION
 ```
 
 Verify:
 
 ```bash
 az group show \
-  --name rg-eus2-cuexample-dev-01 \
+  --name $RG \
   --output table
 ```
 
@@ -76,9 +84,9 @@ az group show \
 ```bash
 # Create storage account
 az storage account create \
-  --name saeus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
-  --location eastus2 \
+  --name $SA_NAME \
+  --resource-group $RG \
+  --location $LOCATION \
   --sku Standard_LRS
 ```
 
@@ -86,8 +94,8 @@ Get the connection string for use in later steps:
 
 ```bash
 az storage account show-connection-string \
-  --name saeus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $SA_NAME \
+  --resource-group $RG \
   --query connectionString -o tsv
 ```
 
@@ -95,8 +103,8 @@ Create source and destination containers:
 
 ```bash
 CONN_STR=$(az storage account show-connection-string \
-  --name saeus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $SA_NAME \
+  --resource-group $RG \
   --query connectionString -o tsv)
 
 az storage container create --name source --connection-string "$CONN_STR"
@@ -107,26 +115,10 @@ Upload a test file to source:
 
 ```bash
 az storage blob upload \
-  --account-name saeus2cuexampledev01 \
+  --account-name $SA_NAME \
   --container-name source \
   --name invoice.pdf \
   --file ./invoice.pdf
-```
-
----
-
-## Step 3 — Create Azure Function App
-
-```bash
-az functionapp create \
-  --name azfuneus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
-  --storage-account saeus2cuexampledev01 \
-  --consumption-plan-location eastus2 \
-  --runtime python \
-  --runtime-version 3.11 \
-  --functions-version 4 \
-  --os-type Linux
 ```
 
 ---
@@ -137,9 +129,9 @@ Create the AI Services resource in East US 2. Content Understanding preview API 
 
 ```bash
 az cognitiveservices account create \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
-  --location eastus2 \
+  --name $CS_NAME \
+  --resource-group $RG \
+  --location $LOCATION \
   --kind AIServices \
   --sku S0 \
   --yes
@@ -154,8 +146,8 @@ Three models are required: `gpt-4.1`, `gpt-4.1-mini`, and `text-embedding-3-larg
 ```bash
 # Deploy gpt-4.1
 az cognitiveservices account deployment create \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $CS_NAME \
+  --resource-group $RG \
   --deployment-name gpt-4.1 \
   --model-name gpt-4.1 \
   --model-version "2025-04-14" \
@@ -165,8 +157,8 @@ az cognitiveservices account deployment create \
 
 # Deploy gpt-4.1-mini
 az cognitiveservices account deployment create \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $CS_NAME \
+  --resource-group $RG \
   --deployment-name gpt-4.1-mini \
   --model-name gpt-4.1-mini \
   --model-version "2025-04-14" \
@@ -176,8 +168,8 @@ az cognitiveservices account deployment create \
 
 # Deploy text-embedding-3-large
 az cognitiveservices account deployment create \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $CS_NAME \
+  --resource-group $RG \
   --deployment-name text-embedding-3-large \
   --model-name text-embedding-3-large \
   --model-version "1" \
@@ -190,8 +182,8 @@ Verify all three are deployed:
 
 ```bash
 az cognitiveservices account deployment list \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $CS_NAME \
+  --resource-group $RG \
   --query "[].{Name:name, Model:properties.model.name, Status:properties.provisioningState}" \
   --output table
 ```
@@ -215,13 +207,18 @@ This maps the CU analyzer roles to the deployed models. Without this step analyz
 ```bash
 # Get CU key
 CU_KEY=$(az cognitiveservices account keys list \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $CS_NAME \
+  --resource-group $RG \
   --query "key1" -o tsv)
+
+Note: If you using API key you can use both Foundry as well as AIService URLs. Eg: 
+* Foundry - my-foundry-cu-001.services.ai.azure.com - custom subdomain, unique to your resource, only created in DNS when Azure provisions it
+* AI Service - eastus2.api.cognitive.microsoft.com - regional endpoint, shared across all customers, always exists in DNS
+For Managed Identity way of working you will need Foundry custom subdomain to work. The custom subdomain DNS entry takes time to propagate. It's a per-resource DNS record that Azure has to create and push out globally after provisioning.
 
 # Set defaults
 curl -X PATCH \
-  "https://my-foundry-cu-01.services.ai.azure.com/contentunderstanding/defaults?api-version=2025-11-01" \
+  "$CU_ENDPOINT/contentunderstanding/defaults?api-version=2025-11-01" \
   -H "Ocp-Apim-Subscription-Key: $CU_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -262,6 +259,22 @@ Error: CU analysis failed: {'id': 'c57522ec-ccea-45cc-b950-996b691936a5', 'statu
 
 ---
 
+## Step 3 — Create Azure Function App
+
+```bash
+az functionapp create \
+  --name $FN_NAME \
+  --resource-group $RG \
+  --storage-account $SA_NAME \
+  --consumption-plan-location $LOCATION \
+  --runtime python \
+  --runtime-version 3.11 \
+  --functions-version 4 \
+  --os-type Linux
+```
+
+---
+
 ## Step 7 — Configure Function App Settings
 
 Pull values directly from Azure to avoid manual copy-paste:
@@ -269,31 +282,31 @@ Pull values directly from Azure to avoid manual copy-paste:
 ```bash
 # Storage connection string
 CONN_STR=$(az storage account show-connection-string \
-  --name saeus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $SA_NAME \
+  --resource-group $RG \
   --query connectionString -o tsv)
 
 # CU endpoint and key
 CU_ENDPOINT=$(az cognitiveservices account show \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $CS_NAME \
+  --resource-group $RG \
   --query "properties.endpoint" -o tsv)
 
 CU_KEY=$(az cognitiveservices account keys list \
-  --name my-foundry-cu-01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $CS_NAME \
+  --resource-group $RG \
   --query "key1" -o tsv)
 
 # Set all app settings
 az functionapp config appsettings set \
-  --name azfuneus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $FN_NAME \
+  --resource-group $RG \
   --settings \
     "STORAGE_CONNECTION_STRING=$CONN_STR" \
-    "STORAGE_ACCOUNT_NAME=saeus2cuexampledev01" \
+    "STORAGE_ACCOUNT_NAME=$SA_NAME" \
     "SOURCE_CONTAINER=source" \
     "DESTINATION_CONTAINER=destination" \
-    "CU_ENDPOINT=https://my-foundry-cu-01.services.ai.azure.com" \
+    "CU_ENDPOINT=$CU_ENDPOINT" \
     "CU_KEY=$CU_KEY" \
     "ANALYZER_ID=prebuilt-documentSearch"
 ```
@@ -304,8 +317,8 @@ Verify all settings are in place:
 
 ```bash
 az functionapp config appsettings list \
-  --name azfuneus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $FN_NAME \
+  --resource-group $RG \
   --output table
 ```
 
@@ -348,10 +361,10 @@ requests
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "STORAGE_CONNECTION_STRING": "<your-connection-string>",
-    "STORAGE_ACCOUNT_NAME": "saeus2cuexampledev01",
+    "STORAGE_ACCOUNT_NAME": "$SA_NAME",
     "SOURCE_CONTAINER": "source",
     "DESTINATION_CONTAINER": "destination",
-    "CU_ENDPOINT": "https://my-foundry-cu-01.services.ai.azure.com",
+    "CU_ENDPOINT": "https://$CS_NAME.services.ai.azure.com",
     "CU_KEY": "<your-cu-key>",
     "ANALYZER_ID": "prebuilt-documentSearch"
   }
@@ -495,15 +508,15 @@ def process_document(req: func.HttpRequest) -> func.HttpResponse:
 ## Step 9 — Deploy the Function
 
 ```bash
-func azure functionapp publish azfuneus2cuexampledev01
+func azure functionapp publish $FN_NAME
 ```
 
 At the end of the output you should see:
 
 ```
-Functions in azfuneus2cuexampledev01:
+Functions in $FN_NAME:
     process_document - [httpTrigger]
-        Invoke url: https://azfuneus2cuexampledev01.azurewebsites.net/api/process_document
+        Invoke url: https://$FN_NAME.azurewebsites.net/api/process_document
 ```
 
 ---
@@ -514,8 +527,8 @@ Get the function key:
 
 ```bash
 az functionapp function keys list \
-  --name azfuneus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $FN_NAME \
+  --resource-group $RG \
   --function-name process_document \
   --query "default" -o tsv
 ```
@@ -523,13 +536,14 @@ az functionapp function keys list \
 Open a log stream in one terminal:
 
 ```bash
-func azure functionapp logstream azfuneus2cuexampledev01
+func azure functionapp logstream $FN_NAME
 ```
 
 Trigger the function in another terminal:
 
 ```bash
-curl "https://azfuneus2cuexampledev01.azurewebsites.net/api/process_document?code=<key>&filename=invoice.pdf"
+FN_KEY=redacted
+curl "https://$FN_NAME.azurewebsites.net/api/process_document?code=$FN_KEY&filename=invoice.pdf"
 ```
 
 Expected response:
@@ -546,7 +560,7 @@ Verify the output file in the destination container:
 
 ```bash
 az storage blob download \
-  --account-name saeus2cuexampledev01 \
+  --account-name $SA_NAME \
   --container-name destination \
   --name invoice.json \
   --file invoice_result.json
@@ -562,8 +576,8 @@ Change `ANALYZER_ID` in App Settings to use a different built-in analyzer — no
 
 ```bash
 az functionapp config appsettings set \
-  --name azfuneus2cuexampledev01 \
-  --resource-group rg-eus2-cuexample-dev-01 \
+  --name $FN_NAME \
+  --resource-group $RG \
   --settings "ANALYZER_ID=prebuilt-invoice"
 ```
 
@@ -590,3 +604,14 @@ az functionapp config appsettings set \
 **`requirements.txt` must be correct before first deploy** — if a package is missing the function will deploy successfully but no functions will be registered, showing an empty list after `func azure functionapp publish`.
 
 **API version** — use `2025-11-01`. Earlier versions such as `2024-12-01-preview` return 404 on some endpoints.
+
+**\*Purge CS**
+To purge a Cognitive service execute this command
+
+```
+az cognitiveservices account purge \
+  --name $CS_NAME \
+  --resource-group $RG \
+  --location $LOCATION
+
+```

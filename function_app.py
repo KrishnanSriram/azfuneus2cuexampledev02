@@ -54,7 +54,7 @@ def process_document(req: func.HttpRequest) -> func.HttpResponse:
         logging.info('Detected content type: %s', content_type)
 
         # ── Step 3: Send binary directly to CU ───────────────────────────
-        logging.info('Submitting binary to Content Understanding analyzer: %s', analyzer_id)
+        logging.info('Submitting binary to CU analyzer: %s', analyzer_id)
         submit_url = (
             f"{cu_endpoint}/contentunderstanding/analyzers"
             f"/{analyzer_id}:analyzeBinary"
@@ -79,7 +79,7 @@ def process_document(req: func.HttpRequest) -> func.HttpResponse:
         poll_headers = {"Ocp-Apim-Subscription-Key": cu_key}
         result = None
 
-        for attempt in range(5):
+        for attempt in range(30):
             time.sleep(3)
             poll_resp = requests.get(operation_url, headers=poll_headers, timeout=30)
             poll_resp.raise_for_status()
